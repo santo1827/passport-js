@@ -13,7 +13,7 @@ services:
     networks:
       - shared-network
     depends_on:
-      - example_sql
+      - passport_sql
 
   client:
     stdin_open: true
@@ -32,9 +32,9 @@ services:
     networks:
       - shared-network
   
-  example_sql:
+  passport_sql:
     image: mysql:5.7
-    container_name: example_sql
+    container_name: passport_sql
     environment:
       MYSQL_ROOT_PASSWORD: my_secret_password
       MYSQL_DATABASE: app_db
@@ -48,11 +48,11 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: example_pma
+    container_name: passport_pma
     links:
-      - example_sql
+      - passport_sql
     environment:
-      PMA_HOST: example_sql
+      PMA_HOST: passport_sql
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
     restart: always
