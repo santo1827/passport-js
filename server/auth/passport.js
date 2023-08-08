@@ -1,5 +1,6 @@
 const passport = require('passport');
 const localStrategy = require('passport-local');
+const bcrypt = require('bcryptjs')
 const con = require('../config/db');
 
 passport.use(
@@ -10,7 +11,7 @@ passport.use(
             usernameField: 'email',
             passwordField: 'password'
         },
-        (req, email, password, done) => {
+        (email, password, done) => {
             const sqlCheck = 'SELECT email FROM users WHERE email = ?';
 
             con.query(sqlCheck, [email], (error, results) => {
@@ -25,7 +26,7 @@ passport.use(
 
                 const query = 'INSERT INTO users (email, password) VALUES (?, ?)';
                 
-                con.query(query, [String(email), String(password)], (insertError, result) => {
+                con.query(query, [email, password], (insertError, result) => {
                     if (insertError) {
                         console.error(insertError);
                         return done(insertError);
@@ -45,3 +46,54 @@ passport.use(
     )
 );
 
+passport.use(
+    'login',
+    new localStrategy(
+        {
+            usernameField: 'email',
+            passwordField: 'password'
+        }, (email, password, done) => {
+            
+            const selectQuery = 'SELECT Password FROM users WHERE email = ?'
+
+            con.query(selectQuery, [email], (error, response) => {
+                if (error) {
+                    console.error(error);
+                    return done(error);
+                }
+                if (!response) {
+                    return done({message: "User not found"})
+                } else {
+                    const compare = bcrypt.compareSync(password,result.password)
+
+                    if (compare) {
+                        return done(null, user, {message: 'Successfully logged in!'});
+                    } else {
+                        return done(null, false, {message: 'Password incorrect'});
+                    }
+                }
+            })
+
+        }
+
+    )
+)
+
+const JWTstrategy = require('passport-jwt').Strategy;
+const ExtractJWT = require('passport-jwt').ExtractJwt;
+
+passport.use(
+    new JWTstrategy(
+        {
+        secretOrKey: 'TOP_SECRET',
+        jwtFromRequest: ExtractJWT.fromUrlQueryParameter('secret_token')
+        },
+        async (token, done) => {
+        try {
+            return done(null, token.user);
+        } catch (error) {
+            done(error);
+        }
+        }
+    )
+);
